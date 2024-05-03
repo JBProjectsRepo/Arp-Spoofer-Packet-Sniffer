@@ -51,9 +51,9 @@ class Sniffer:
         #     self.insert_payload(scapy_packet)
         #     scapy.sendp(scapy_packet, verbose=False)
 
-
+    # Não esquecer de lidar com checksums!!
     def insert_payload(self, packet):
-        # Não esquecer de lidar com checksums!!
+        return 0
 
     def get_iface(self):
         route = scapy.Route()
