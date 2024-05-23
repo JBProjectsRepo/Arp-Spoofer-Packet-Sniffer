@@ -50,7 +50,6 @@ class ArpSpoofer:
 
     def attack(self):
         self.print_setup()
-        print("#### Spoofing..... #####")
         print("#### Press Ctrl+C to finish the attack ####")
         while self.continue_attack_loop:
             self.spoof()

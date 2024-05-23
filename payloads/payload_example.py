@@ -1,4 +1,4 @@
-def pkt_payload(scapy_packet):
+def pkt_payload(self, scapy_packet):
     if "ICMP" in scapy_packet:
         print("Payload inserted!")
     else:

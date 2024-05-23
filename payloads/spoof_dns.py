@@ -1,5 +1,6 @@
 import scapy.all as scapy
 
+
 def pkt_payload(self, scapy_packet):
     name = "amazon"
     attacker_server = "192.168.0.27"
