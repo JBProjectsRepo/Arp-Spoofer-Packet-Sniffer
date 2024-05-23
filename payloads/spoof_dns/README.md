@@ -6,8 +6,9 @@ script) to that name.
 
 ### Here are two suggestions to create the webserver:
 
-- ### 1- Run the script server.py located in https_server folder. This will start a http and https server on the ip defined in the script (configurations required to respond ipv6 requests are commented in the script). 
-#### OBS: First, you will need to run the command "openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365" in order to generate the server certificate and key. After that, place the cert.pem and key.pem files in this folder.
+- ### 1- Run the script server.py located in https_server folder. This will start a http and https server on the ip defined in the script (configurations required to respond ipv6 requests are commented in the script).
+  
+OBS: First, you will need to run the command "openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365" in order to generate the server certificate and key. After that, place the ***cert.pem*** and ***key.pem*** files in this folder.
 
 - ### 2- Use setoolkit to clone a website and start a server:
 ### For this option you should do the following
