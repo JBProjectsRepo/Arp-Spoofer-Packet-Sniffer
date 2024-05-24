@@ -9,10 +9,10 @@
 
 ## USAGE
 
-- python main.py x.x.x.x y.y.y.y
+- sudo python main.py x.x.x.x y.y.y.y
 #### Where x.x.x.x and y.y.y.y are IPs from two hosts in your network wich you want to sniff on communication
 ### You may also run the script with an option to output a .pcap file with the captured packets:
-- python x.x.x.x y.y.y.y pcap
+- sudo python x.x.x.x y.y.y.y pcap
 
 #### OBS #1: If "pcap" is not specified in the arguments, the capture won't be saved
 
