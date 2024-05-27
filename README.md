@@ -2,8 +2,8 @@
  This script was developed with python 3 and uses Scapy packet manipulation library in order to spoof two victims MAC address and sniff all the communication between them. 
 
 ### After running the script, you will be presented with two options:
-- OPTION 1 (No Payload)# You will be able to sniff on the communication between two hosts and save the exchanged packets, but you won't be able to modify them
-2. OPTION 2 (Custom Payload)# You will be able to specify a function that receives a Scapy Packet as a parameter and modify it as you wish
+- OPTION #1 (No Payload) You will be able to sniff on the communication between two hosts and save the exchanged packets, but you won't be able to modify them
+2. OPTION #2 (Custom Payload) You will be able to specify a function that receives a Scapy Packet as a parameter and modify it as you wish
 
 **Note**: Some examples for option #2 are listed under "payloads" folder
 
