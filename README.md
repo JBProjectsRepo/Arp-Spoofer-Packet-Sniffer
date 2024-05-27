@@ -16,7 +16,7 @@ Where x and y are IPs from two hosts in your network which you want to sniff on 
 
 You may also output a **.pcap** file to save the captured packets:
 ````
-sudo python x y pcap
+sudo python main.py x y pcap
 ````
 
 #### Note:
