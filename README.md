@@ -13,7 +13,8 @@ sudo python main.py x y
 ````
 
 Where x and y are IPs from two hosts in your network which you want to sniff on communications
-### You may also run the script with an option to output a .pcap file with the captured packets:
+
+You may also output a **.pcap** file to save the captured packets:
 ````
 - sudo python x y pcap
 ````
