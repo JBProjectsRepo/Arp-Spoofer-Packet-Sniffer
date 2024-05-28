@@ -3,7 +3,11 @@ This script basically receives a Scapy Packet object as a parameter and search f
 
 ### Suggestions for webserver:
 
-- Suggestion #1 Run **server.py** located in **https_server** folder.
+- Suggestion #1
+  + Edit **server.py** script, located in **https_server** folder
+  + Set variable **ip**  to the desired ip
+  + (Optional) Edit **index.html** as you wish
+  + Run **server.py**
 
 This will start a http and https server on the ip defined in the script (configurations required to respond ipv6 requests are commented in the script).
   
