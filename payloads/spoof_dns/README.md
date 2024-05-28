@@ -24,8 +24,10 @@ After that, place the ***cert.pem*** and ***key.pem*** files in the same folder 
   + 2.8 - Type the same website name you configured in spoof_dns script
   + 2.9 - Get the credentials on the command line.
 ### TESTING:
-- **curl** test_domain.com
-- **wget** test_domain.com
-- **nslookup** test_domain.com
-- **Browsers**: Since browsers behave different between each other and usually enforce security on self-signed certificates, tests 
-  here should be done carefully
+
+A good domain to test the DNS spoof is https://example.com/. Some options for testing are:
+
+- **curl** example.com
+- **wget** example.com
+- **nslookup** example.com
+- **Browsers**: Since browsers behave different between each other and usually enforce security on self-signed certificates, tests here should be done carefully
