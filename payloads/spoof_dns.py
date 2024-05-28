@@ -2,7 +2,7 @@ import scapy.all as scapy
 
 
 def pkt_payload(scapy_packet):
-    name = "amazon"
+    name = "example.com"
     attacker_server = "192.168.0.27"
 
     if "DNS" in scapy_packet:
