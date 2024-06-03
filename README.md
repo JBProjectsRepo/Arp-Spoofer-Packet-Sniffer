@@ -20,6 +20,7 @@ sudo python main.py x y pcap
 ````
 
 #### Note:
++ Sudo is required because Scapy uses python socket Library to create packets, thats why it is recommended that the script is run in a safe environment
 + If "pcap" is not specified in the arguments, the capture won't be saved
 + Captured packets will be saved on a folder called packet_captures
 + To sniff traffic between a victim in your network and the internet, one of the IPs in the arguments should be the gateway of your network
